@@ -4,3 +4,4 @@ Hands-on practice on tutorials from [OpenCV](https://opencv-python-tutroals.read
 
 + How to capture video stream from IP Camera?
 + [Track colored object in a a video](colored_object_tracking.py)
++ [Thresholding](thresholding.py)
