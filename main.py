@@ -2,6 +2,7 @@ import cv2
 import argparse
 from video_processor import read_video
 from colored_object_tracking import track_objects, HSV_Limits
+from thresholding import apply_thresholding
 
 ap = argparse.ArgumentParser()
 ap.add_argument('-wc', '--web_cam', default=False, action='store_true', help="Use Integrated webcam")
@@ -27,7 +28,9 @@ if __name__ == "__main__":
     # color_limits.append(HSV_Limits(color='green'))
     # color_limits.append(HSV_Limits(color='red'))
 
-    track_objects(cap, color_limits, display_masks=True)
+    # track_objects(cap, color_limits, display_masks=True)
+
+    apply_thresholding(cap)
 
     cap.release()
     cv2.destroyAllWindows()
