@@ -46,6 +46,42 @@ def detect_face(img, shape_predictor_path = 'Data\shape_predictor_68_face_landma
 
 	return image
 
+def detect_facial_landmarks(img, shape_predictor_path = 'Data\shape_predictor_68_face_landmarks.dat'):
+
+	detector = dlib.get_frontal_face_detector()
+	predictor = dlib.shape_predictor(shape_predictor_path)
+
+	img = imutils.resize(img, width=500)
+	greyed = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+	rects = detector(greyed, 1)
+	colors = [(19, 199, 109), (79, 76, 240), (230, 159, 23), (230, 159, 23), (168, 100, 168), (158, 163, 32), (163, 38, 32), (180, 42, 220)]
+	for i, rect in enumerate(rects):
+
+		shape = predictor(greyed, rect)
+		shape = face_utils.shape_to_np(shape)
+		# print(shape.shape)
+		for name, (i,j) in face_utils.FACIAL_LANDMARKS_IDXS.items():
+			clone = img.copy()
+			cv2.putText(clone, name, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255), 2)
+
+			for (x,y) in shape[i:j]:
+				cv2.circle(clone, (x,y), 1, (0,0,255), -1)
+			
+			(x,y,w,h) = cv2.boundingRect(np.array([shape[i:j]]))
+			roi = img[y:y+h,x:x+w]
+			roi = imutils.resize(roi, width=250, inter=cv2.INTER_CUBIC)
+
+			cv2.imshow("ROI", roi)
+			cv2.imshow("Image", clone)
+			cv2.waitKey(0)
+		
+		out = face_utils.visualize_facial_landmarks(img, shape, colors=colors)
+		cv2.imshow("Image", out)
+		cv2.waitKey(0)
+
+
+
 if __name__ == "__main__":
 	
 	# construct the argument parser and parse the arguments
@@ -57,7 +93,9 @@ if __name__ == "__main__":
 	args = vars(ap.parse_args())
 
 	img = cv2.imread(args["image"])
-	image = detect_face(img)
+	# image = detect_face(img)
+	# cv2.imshow('Frame', image)
+	# cv2.waitKey(0)
+
+	detect_facial_landmarks(img)
 	
-	cv2.imshow('Frame', image)
-	cv2.waitKey(0)
