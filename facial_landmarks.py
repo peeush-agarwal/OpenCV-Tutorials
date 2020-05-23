@@ -1,101 +1,110 @@
-# USAGE
-# python facial_landmarks.py --shape-predictor shape_predictor_68_face_landmarks.dat --image images/example_01.jpg 
-
-# import the necessary packages
-from imutils import face_utils
-import numpy as np
-import argparse
-import imutils
 import dlib
+import imutils
+from imutils import face_utils
 import cv2
+import numpy as np
 
-def detect_face(img, shape_predictor_path = 'Data\shape_predictor_68_face_landmarks.dat'):
-	# initialize dlib's face detector (HOG-based) and then create
-	# the facial landmark predictor
-	detector = dlib.get_frontal_face_detector()
-	predictor = dlib.shape_predictor(shape_predictor_path)
+class FacialLandmarks(object):
+    def __init__(self, shape_predictor_path = 'Data\shape_predictor_68_face_landmarks.dat'):
+        self.__detector__ = dlib.get_frontal_face_detector()
+        self.__predictor__ = dlib.shape_predictor(shape_predictor_path)
+    
+    def detect_facial_landmarks(self, img_path):
+        img = cv2.imread(img_path)
+        img = imutils.resize(img, width=500)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-	# load the input image, resize it, and convert it to grayscale
-	image = imutils.resize(img, width=500)
-	gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        rects = self.__detector__(gray, 1)
 
-	# detect faces in the grayscale image
-	rects = detector(gray, 1)
+        for i, rect in enumerate(rects):
+            shape = self.__predictor__(gray, rect)
+            shape = face_utils.shape_to_np(shape)
 
-	# loop over the face detections
-	for i, rect in enumerate(rects):
-		# determine the facial landmarks for the face region, then
-		# convert the facial landmark (x, y)-coordinates to a NumPy
-		# array
-		shape = predictor(gray, rect)
-		shape = face_utils.shape_to_np(shape)
+            (x,y,w,h) = face_utils.rect_to_bb(rect)
+            cv2.rectangle(img, (x,y), (x+w,y+h), (0,255,0), 2)
+            cv2.putText(img, f'Face:{i+1}', (x-10,y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0),2)
 
-		# convert dlib's rectangle to a OpenCV-style bounding box
-		# [i.e., (x, y, w, h)], then draw the face bounding box
-		x, y, w, h = face_utils.rect_to_bb(rect)
-		cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            for (x,y) in shape:
+                cv2.circle(img, (x,y), 1, (0,0,255), -1)
+        
+        cv2.imshow('Image', img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+    
+    def extract_facial_landmarks(self, img_path):
+        img = cv2.imread(img_path)
+        img = imutils.resize(img, width=500)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-		# show the face number
-		cv2.putText(image, "Face #{}".format(i + 1), (x - 10, y - 10),
-			cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+        rects = self.__detector__(gray, 1)
 
-		# loop over the (x, y)-coordinates for the facial landmarks
-		# and draw them on the image
-		for (x, y) in shape:
-			cv2.circle(image, (x, y), 1, (0, 0, 255), -1)
+        colors = [(19, 199, 109), (79, 76, 240), (230, 159, 23),
+        (168, 100, 168), (158, 163, 32),
+        (163, 38, 32), (180, 42, 220), (255, 0,255 )]
+        for i, rect in enumerate(rects):
+            shape = self.__predictor__(gray, rect)
+            shape = face_utils.shape_to_np(shape)
 
-	return image
+            for name, (i,j) in face_utils.FACIAL_LANDMARKS_IDXS.items():
+                clone = img.copy()
+                cv2.putText(clone, name, (10,20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
 
-def detect_facial_landmarks(img, shape_predictor_path = 'Data\shape_predictor_68_face_landmarks.dat'):
+                for (x,y) in shape[i:j]:
+                    cv2.circle(clone, (x,y), 1, (0,0,255), -1)
 
-	detector = dlib.get_frontal_face_detector()
-	predictor = dlib.shape_predictor(shape_predictor_path)
+                (x,y,w,h) = cv2.boundingRect(np.array(shape[i:j]))
+                roi = img[y:y+h,x:x+w]
+                roi = imutils.resize(roi, width=250, inter=cv2.INTER_CUBIC)
+                cv2.imshow('Image', clone)
+                cv2.imshow('ROI', roi)
+                cv2.waitKey(0)
 
-	img = imutils.resize(img, width=500)
-	greyed = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            out = face_utils.visualize_facial_landmarks(img, shape, colors=colors)
+            cv2.imshow('Output', out)
+            cv2.waitKey(0)
+        cv2.destroyAllWindows()
 
-	rects = detector(greyed, 1)
-	colors = [(19, 199, 109), (79, 76, 240), (230, 159, 23), (230, 159, 23), (168, 100, 168), (158, 163, 32), (163, 38, 32), (180, 42, 220)]
-	for i, rect in enumerate(rects):
+    def detect_facial_landmarks_video(self, cap):
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if frame is None:
+                break
+            frame = imutils.resize(frame, width=500)
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-		shape = predictor(greyed, rect)
-		shape = face_utils.shape_to_np(shape)
-		# print(shape.shape)
-		for name, (i,j) in face_utils.FACIAL_LANDMARKS_IDXS.items():
-			clone = img.copy()
-			cv2.putText(clone, name, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255), 2)
+            rects = self.__detector__(gray, 1)
 
-			for (x,y) in shape[i:j]:
-				cv2.circle(clone, (x,y), 1, (0,0,255), -1)
-			
-			(x,y,w,h) = cv2.boundingRect(np.array([shape[i:j]]))
-			roi = img[y:y+h,x:x+w]
-			roi = imutils.resize(roi, width=250, inter=cv2.INTER_CUBIC)
+            for i, rect in enumerate(rects):
+                shape = self.__predictor__(gray, rect)
+                shape = face_utils.shape_to_np(shape)
 
-			cv2.imshow("ROI", roi)
-			cv2.imshow("Image", clone)
-			cv2.waitKey(0)
-		
-		out = face_utils.visualize_facial_landmarks(img, shape, colors=colors)
-		cv2.imshow("Image", out)
-		cv2.waitKey(0)
+                (x,y,w,h) = face_utils.rect_to_bb(rect)
+                cv2.rectangle(frame, (x,y), (x+w,y+h), (0,255,0), 2)
+                cv2.putText(frame, f'Face:{i+1}', (x-10,y-10),cv2.FONT_HERSHEY_SIMPLEX,0.5,(0,255,0),2)
 
+                for (x,y) in shape:
+                    cv2.circle(frame, (x,y), 1, (0,0,255), -1)
+            
+            cv2.imshow('Frame', frame)
 
+            if cv2.waitKey(1) & 0xFF==ord('q'):
+                break
+    
 
 if __name__ == "__main__":
-	
-	# construct the argument parser and parse the arguments
-	ap = argparse.ArgumentParser()
-	ap.add_argument("-p", "--shape-predictor", required=False,
-		help="path to facial landmark predictor")
-	ap.add_argument("-i", "--image", required=True,
-		help="path to input image")
-	args = vars(ap.parse_args())
+    facial_landmarks = FacialLandmarks()
 
-	img = cv2.imread(args["image"])
-	# image = detect_face(img)
-	# cv2.imshow('Frame', image)
-	# cv2.waitKey(0)
+    # Video processing
+    cap = cv2.VideoCapture(0)
+    facial_landmarks.detect_facial_landmarks_video(cap)
+    cap.release()
+    cv2.destroyAllWindows()
+    exit(0)
 
-	detect_facial_landmarks(img)
-	
+    # Extract facial landmarks from image
+    facial_landmarks.extract_facial_landmarks('Data\Images\example_01.jpg')
+
+    # Detect facial landmarks from image
+    facial_landmarks.detect_facial_landmarks('Data\Images\example_01.jpg')
+    facial_landmarks.detect_facial_landmarks('Data\Images\example_02.jpg')
+    facial_landmarks.detect_facial_landmarks('Data\Images\example_03.jpg')
