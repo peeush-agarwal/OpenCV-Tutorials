@@ -1,6 +1,6 @@
 import cv2
 import argparse
-from video_processor import read_video
+from video_processor import read_video, video_facial_landmarks
 from colored_object_tracking import track_objects, HSV_Limits
 from thresholding import apply_thresholding
 from facial_landmarks import detect_face
@@ -35,18 +35,20 @@ if __name__ == "__main__":
 
     # print(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     # print(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    while cap.isOpened():
-        ret, frame = cap.read()
-        # print(ret)
+    # while cap.isOpened():
+    #     ret, frame = cap.read()
+    #     # print(ret)
 
-        if frame is None:
-            break
+    #     if frame is None:
+    #         break
 
-        img = detect_face(frame)
+    #     img = detect_face(frame)
         
-        cv2.imshow('Processed', img)
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+    #     cv2.imshow('Processed', img)
+    #     if cv2.waitKey(1) & 0xFF == ord('q'):
+    #         break
 
-    cap.release()
-    cv2.destroyAllWindows()
+    video_facial_landmarks(cap)
+    
+    # cap.release()
+    # cv2.destroyAllWindows()
