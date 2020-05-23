@@ -3,6 +3,7 @@ import imutils
 from imutils import face_utils
 import cv2
 import numpy as np
+from scipy.spatial import distance as dist
 
 class FacialLandmarks(object):
     def __init__(self, shape_predictor_path = 'Data\shape_predictor_68_face_landmarks.dat'):
@@ -90,9 +91,89 @@ class FacialLandmarks(object):
             if cv2.waitKey(1) & 0xFF==ord('q'):
                 break
     
+    def detect_eye_blink(self, cap):
+        EYE_AR_THRESHOLD = 0.15
+        EYE_AR_CONSEC_FRAMES = 3
+
+        COUNTER = 0
+        TOTAL = 0
+
+        (lStart, lEnd) = face_utils.FACIAL_LANDMARKS_IDXS["left_eye"]
+        (rStart, rEnd) = face_utils.FACIAL_LANDMARKS_IDXS["right_eye"]
+
+        ears = list()
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if frame is None:
+                break
+            frame = imutils.resize(frame, width=500)
+            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+            rects = self.__detector__(gray, 1)
+
+            for i, rect in enumerate(rects):
+                shape = self.__predictor__(gray, rect)
+                shape = face_utils.shape_to_np(shape)
+
+                left_eye_pts = shape[lStart:lEnd]
+                right_eye_pts = shape[rStart:rEnd]
+
+                # for (x,y) in left_eye_pts:
+                #     cv2.circle(frame, (x,y), 1, (0,255,0),-1)
+                    
+                # for (x,y) in right_eye_pts:
+                #     cv2.circle(frame, (x,y), 1, (0,0,255),-1)
+                
+                l_ear = self.__calc_eye_aspect_ratio__(left_eye_pts)
+                r_ear = self.__calc_eye_aspect_ratio__(right_eye_pts)
+                ear = (l_ear + r_ear)/2.0
+
+                l_hull = cv2.convexHull(left_eye_pts)
+                r_hull = cv2.convexHull(right_eye_pts)
+                cv2.drawContours(frame, [l_hull], -1, (0, 255, 0), 1)
+                cv2.drawContours(frame, [r_hull], -1, (0, 255, 0), 1)
+
+                if ear < EYE_AR_THRESHOLD:
+                    COUNTER += 1
+                else:
+                    if COUNTER >= EYE_AR_CONSEC_FRAMES:
+                        TOTAL += 1
+                    COUNTER = 0
+                print(f'TOTAL: {TOTAL}, EAR: {ear:.2f}')
+                cv2.putText(frame, f'BLINKS:{TOTAL}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
+                cv2.putText(frame, f'EAR:{ear:.2f}', (400, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
+            
+            cv2.imshow('Frame', frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        
+
+    def __calc_eye_aspect_ratio__(self, eye_pts):
+        '''
+        eye_pts has 6 (x,y) points as following:
+                    pt1     pt2
+            pt0                     pt3
+                    pt5     pt4
+            EAR = [(pt1 - pt5) + (pt2 - pt4)]/[2*(pt0-pt3)]
+        '''
+        A = dist.euclidean(eye_pts[1], eye_pts[5])
+        B = dist.euclidean(eye_pts[2], eye_pts[4])
+        C = dist.euclidean(eye_pts[0], eye_pts[3])
+
+        ear = (A + B)/(2.0*C)
+
+        return ear
+
 
 if __name__ == "__main__":
     facial_landmarks = FacialLandmarks()
+
+    # Blink detection
+    cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+    facial_landmarks.detect_eye_blink(cap)
+    cap.release()
+    cv2.destroyAllWindows()
+    exit(0)
 
     # Video processing
     cap = cv2.VideoCapture(0)
