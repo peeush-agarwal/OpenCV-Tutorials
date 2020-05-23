@@ -135,9 +135,10 @@ class FacialLandmarks(object):
 
                 if ear < EYE_AR_THRESHOLD:
                     COUNTER += 1
-                else:
+                    
                     if COUNTER >= EYE_AR_CONSEC_FRAMES:
                         TOTAL += 1
+                else:
                     COUNTER = 0
                 print(f'TOTAL: {TOTAL}, EAR: {ear:.2f}')
                 cv2.putText(frame, f'BLINKS:{TOTAL}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255), 2)
