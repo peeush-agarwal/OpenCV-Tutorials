@@ -20,3 +20,17 @@ Hands-on practice on tutorials from [OpenCV](https://opencv-python-tutroals.read
 + Detect facial landmarks from the given image
 + Extract ROI for Eyes, Nose, EyeBrows, JawLine, Mouth from image
 + Detect facial landmarks in real time using webcam
+
+## Face detection using OpenCV DNN Caffe model
+
+[Code](face_detector.py)
+
++ Detect face/s in given image path
++ Detect face/s in live webcam
+
+## Comparison between using Non-Threaded vs Threaded processing of Webcam frames
+
+[Code](threaded_webcam_processor_demo.py)
+
++ Use imutils to use WebcamVideoStream to read frames in a thread and process them in main thread
++ Use imutils to use FPS (Frames per second) calculation to compare the result.
