@@ -13,7 +13,7 @@ Hands-on practice on tutorials from [OpenCV](https://opencv-python-tutroals.read
   + [Adaptive thresholding](https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_imgproc/py_thresholding/py_thresholding.html#adaptive-thresholding)
   + [Otsu's binarisation](https://opencv-python-tutroals.readthedocs.io/en/latest/py_tutorials/py_imgproc/py_thresholding/py_thresholding.html#otsus-binarization)
 
-## Face detection using OpenCV, Dlib and imutils
+## Facial Landmarks using OpenCV, Dlib and imutils
 
 [Code](facial_landmarks.py)
 
