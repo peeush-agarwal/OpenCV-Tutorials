@@ -1,3 +1,9 @@
+'''
+Inspired by PyImageSearch blog: https://www.pyimagesearch.com/2017/09/11/object-detection-with-deep-learning-and-opencv/
+This python script demonstrates:
+- How to load pre-trained Caffe model into OpenCV?
+- Use this model to detect and localize objects in image using OpenCV.
+'''
 import argparse
 import numpy as np
 import cv2
